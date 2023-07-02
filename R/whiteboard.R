@@ -7,7 +7,7 @@
 read <- function(file = getOption("whiteboard.data")) {
   readr::read_csv(
     file,
-    col_types = "Dcllllll",
+    col_types = "Ddcllllll",
     show_col_types = FALSE
   ) |>
     dplyr::mutate(
@@ -24,40 +24,17 @@ pillar_shaft.tick <- function(x, ...) {
   pillar::new_pillar_shaft_simple(y, min_width = 2, align = "left")
 }
 
-#' Return date from n days ago
-#'
-#' @param n How many days to backdate
-#'
-#' @return Date
-#' @export
-backdate <- function(n = 0) {
-  lubridate::today() - n
-}
-
-
-#' Update the whiteboard state
-#'
-#' @param date Date
-#' @param make_bed Logical
-#' @param clean_up Logical
-#' @param exercise Logical
-#' @param no_alcohol Logical
-#' @param no_cigarettes Logical
-#' @param eat_okay Logical
-#'
-#' @return Invisibly returns the whiteboard tibble
-#' @export
-update <- function(date = backdate(0),
-                   make_bed = TRUE,
-                   clean_up = TRUE,
-                   exercise = TRUE,
-                   no_alcohol = TRUE,
-                   no_cigarettes = TRUE,
-                   eat_okay = TRUE) {
-  dat <- whiteboard
-  row <- tibble::tibble_row(
+new_row <- function(date,
+                    make_bed,
+                    clean_up,
+                    exercise,
+                    no_alcohol,
+                    no_cigarettes,
+                    eat_okay) {
+  tibble::tibble_row(
     date = date,
     wday = as.character(lubridate::wday(date, label = TRUE)),
+    day = as.numeric(date - as.Date("2023-06-18")),
     make_bed = make_bed,
     clean_up = clean_up,
     exercise = exercise,
@@ -71,6 +48,37 @@ update <- function(date = backdate(0),
         \(x) { class(x) <- "tick"; x }
       )
     )
+}
+
+#' Update the whiteboard state
+#'
+#' @param backdate Days to backdate
+#' @param make_bed Logical
+#' @param clean_up Logical
+#' @param exercise Logical
+#' @param no_alcohol Logical
+#' @param no_cigarettes Logical
+#' @param eat_okay Logical
+#'
+#' @return Invisibly returns the whiteboard tibble
+#' @export
+add <- function(backdate = 0,
+                make_bed = TRUE,
+                clean_up = TRUE,
+                exercise = TRUE,
+                no_alcohol = TRUE,
+                no_cigarettes = TRUE,
+                eat_okay = TRUE) {
+  dat <- read()
+  row <- new_row(
+    lubridate::today() - backdate,
+    make_bed,
+    clean_up,
+    exercise,
+    no_alcohol,
+    no_cigarettes,
+    eat_okay
+  )
   print(row)
   cat("\n")
   val <- readline("okay to add this row? [y/n] ")
@@ -83,7 +91,17 @@ update <- function(date = backdate(0),
   dat <- dat |>
     tibble::add_row(row) |>
     dplyr::arrange(dplyr::desc(date))
-  readr::write_csv(dat, getOption("whiteboard.data"))
+  write(dat)
   return(dat)
+}
+
+#' Write whiteboard data to file
+#'
+#' @param dat Data frame
+#' @param file File location
+#'
+#' @export
+write <- function(dat, file = getOption("whiteboard.data")) {
+  readr::write_csv(dat, file)
 }
 
