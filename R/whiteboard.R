@@ -50,6 +50,44 @@ new_row <- function(date,
     )
 }
 
+yesno_as_logical <- function(x) {
+  if(tolower(x) == "y") return(TRUE)
+  if(tolower(x) == "n") return(FALSE)
+  rlang::abort("invalid response")
+}
+
+#' Use prompts to update the whiteboard state
+#'
+#' @return Invisibly returns the whiteboard tibble
+#' @export
+prompt <- function() {
+  backdate <- readline("How many days to backdate: ") |> as.numeric()
+  entry_date <- lubridate::today() - backdate
+  cat(
+    "Prompting is for the date: ",
+    as.character(entry_date),
+    " (",
+    as.character(lubridate::wday(entry_date, label = TRUE)),
+    ")\n",
+    sep = ""
+  )
+  make_bed <- readline("Did you make the bed? [y/n] ") |> yesno_as_logical()
+  clean_up <- readline("Did you clean up? [y/n] ") |> yesno_as_logical()
+  exercise <- readline("Did you exercise? [y/n] ") |> yesno_as_logical()
+  no_alcohol <- readline("Did you avoid alcohol? [y/n] ") |> yesno_as_logical()
+  no_cigarettes <- readline("Did you avoid cigarettes? [y/n] ") |> yesno_as_logical()
+  eat_okay <- readline("Did you eat okay? [y/n] ") |> yesno_as_logical()
+  add(
+    backdate,
+    make_bed,
+    clean_up,
+    exercise,
+    no_alcohol,
+    no_cigarettes,
+    eat_okay
+  )
+}
+
 #' Update the whiteboard state
 #'
 #' @param backdate Days to backdate
@@ -70,8 +108,9 @@ add <- function(backdate = 0,
                 no_cigarettes = TRUE,
                 eat_okay = TRUE) {
   dat <- read()
+  entry_date <- lubridate::today() - backdate
   row <- new_row(
-    lubridate::today() - backdate,
+    entry_date,
     make_bed,
     clean_up,
     exercise,
@@ -81,12 +120,12 @@ add <- function(backdate = 0,
   )
   print(row)
   cat("\n")
-  val <- readline("okay to add this row? [y/n] ")
+  val <- readline("Okay to add this row? [y/n] ")
   if(val != "y") {
     cat("aborting\n")
     return(invisible(NULL))
   }
-  ind <- which(dat$date == date)
+  ind <- which(dat$date == entry_date)
   if (length(ind) > 0) dat <- dat[-ind, ]
   dat <- dat |>
     tibble::add_row(row) |>
