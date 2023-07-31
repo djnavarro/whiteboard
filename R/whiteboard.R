@@ -58,10 +58,12 @@ yesno_as_logical <- function(x) {
 
 #' Use prompts to update the whiteboard state
 #'
+#' @param backdate Days to backdate (if NULL, prompt will appear)
 #' @return Invisibly returns the whiteboard tibble
 #' @export
-prompt <- function() {
-  backdate <- readline("How many days to backdate: ") |> as.numeric()
+prompt <- function(backdate = NULL) {
+  if (is.null(backdate)) backdate <- readline("How many days to backdate? ")
+  backdate <- as.numeric(backdate)
   entry_date <- lubridate::today() - backdate
   cat(
     "Prompting is for the date: ",

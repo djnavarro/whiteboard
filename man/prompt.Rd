@@ -4,7 +4,10 @@
 \alias{prompt}
 \title{Use prompts to update the whiteboard state}
 \usage{
-prompt()
+prompt(backdate = NULL)
+}
+\arguments{
+\item{backdate}{Days to backdate (if NULL, prompt will appear)}
 }
 \value{
 Invisibly returns the whiteboard tibble
